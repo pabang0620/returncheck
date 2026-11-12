@@ -58,7 +58,7 @@ Letting AI bill directly fails too. The Autopian reported a Hertz customer "char
 
 ## Testing instructions
 
-**Try it:** https://returncheck.35-216-2-121.sslip.io (hosted demo: PayPal sandbox with the shared demo payment token, recorded Claude Sonnet runs, no Anthropic key; no login).
+**Try it:** https://returncheck.35-216-2-121.sslip.io (hosted demo: PayPal sandbox with the shared demo payment token, live Claude Sonnet (claude-sonnet-5-5) with per-IP-hour and per-day caps and a labelled recorded or rule-based fallback; no login).
 
 Follow steps 1 to 4 above (in the phone: **Contest + photo**, **Use example note**, **Send contest**), then open the **Fleet dashboard** and click a zone.
 
