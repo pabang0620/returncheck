@@ -1,6 +1,6 @@
 // AG Studio LLM adapter that talks to our server proxy, which calls Claude. AG Studio's docs only show
 // an OpenAI adapter, so this one is written against the AgLlmAdapter interface in the ag-studio types.
-export function claudeAdapter({ endpoint }) {
+export function claudeAdapter({ endpoint, onSource = null }) {
   return {
     executeTurn(request, options = {}) {
       const call = fetch(endpoint, {
@@ -12,6 +12,7 @@ export function claudeAdapter({ endpoint }) {
         .then(async (res) => {
           const json = await res.json()
           if (!res.ok || json.success === false) throw new Error(json.message || `Studio agent request failed (${res.status})`)
+          onSource?.({ source: json.data.source, reason: json.data.reason || null })
           return json.data
         })
 

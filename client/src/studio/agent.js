@@ -13,8 +13,8 @@ How you work:
 
 // Studio agent framework: a custom lead agent that delegates to the built-in data and widget agents.
 // Every model turn goes through the server proxy, so the Anthropic key stays on the server.
-export function createAnalystHarness(sid) {
-  const adapter = claudeAdapter({ endpoint: `/api/studio/llm?sid=${encodeURIComponent(sid || '')}` })
+export function createAnalystHarness(sid, onSource = null) {
+  const adapter = claudeAdapter({ endpoint: `/api/studio/llm?sid=${encodeURIComponent(sid || '')}`, onSource })
   return ({ api }) => createAiHarness(api, ({ tools, builtIn }) => ({
     agents: [
       directLlmRunner({ id: 'damage-analyst', name: 'Damage Analyst', description: 'Answers questions about damage and recovery and builds widgets on request', instructions: () => ANALYST, tools: () => [tools.delegateTo(['data', 'page', 'widget'])], adapter }),

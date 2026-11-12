@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import { readLiveLimits } from './llm/liveGuard.js'
 
 const forceMock = process.env.FORCE_MOCK === '1'
 const accountMode = !forceMock && process.env.LLM_BACKEND === 'account'
@@ -20,6 +21,10 @@ export const config = {
   paymentMode: process.env.PAYMENT_MODE === 'invoice' ? 'invoice' : 'vault',
   maxSessions: Number(process.env.MAX_SESSIONS || 300),
   sessionTtlMs: Number(process.env.SESSION_TTL_MS || 6 * 3600 * 1000),
+  // Live model caps (LIVE_SAFETY_BRIEF): runs per client IP per hour and per host per day.
+  liveLimits: readLiveLimits(),
+  // Express 'trust proxy' value, so the client IP behind nginx is the real one. Default: only a proxy on this machine.
+  trustProxy: process.env.TRUST_PROXY || 'loopback',
   studioLicenseKey: process.env.AG_STUDIO_LICENSE_KEY || '',
   testBuyer: process.env.SANDBOX_BUYER_EMAIL ? { email: process.env.SANDBOX_BUYER_EMAIL } : null,
 }

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { once } from 'node:events'
 import express from 'express'
-import { fromAnthropicContent, runStudioTurn, toAnthropicRequest } from '../server/routes/studioLlm.js'
+import { fromAnthropicContent, requiredToolOf, runStudioTurn, toAnthropicRequest } from '../server/routes/studioLlm.js'
 import { studioRouter } from '../server/routes/studio.js'
 import { errorHandler } from '../server/http.js'
 import { createSession } from '../server/demo/sessions.js'
@@ -30,7 +30,8 @@ describe('AG Studio Claude adapter (server side)', () => {
 
   it('json response format forces a tool and returns the JSON as text', () => {
     const req = toAnthropicRequest({ input: [msg('user', 'x')], responseFormat: { type: 'json', name: 'out', schema: { type: 'object', properties: {} } } })
-    assert.deepEqual(req.tool_choice, { type: 'tool', name: 'respond_json' })
+    assert.equal(req.tool_choice, undefined)
+    assert.equal(requiredToolOf({ responseFormat: { type: 'json' } }), 'respond_json')
     const out = fromAnthropicContent([{ type: 'tool_use', id: 't', name: 'respond_json', input: { a: 1 } }], { json: true })
     assert.equal(out[0].content[0].text, '{"a":1}')
   })

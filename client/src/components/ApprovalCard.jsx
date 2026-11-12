@@ -47,7 +47,7 @@ export function ApprovalCard({ approval, limitCents, items = [], renter, onAppro
   return (
     <section className={`card approval ${pending ? 'approval--pending' : ''}`} aria-label="Approval card">
       <div className="approval__top"><span className={`st st--${tone}`}>{tag}</span><span className="muted">{approval.id}</span></div>
-      <h1 className="approval__lead">{scripted ? 'Requested by the scripted stand-in' : 'Requested by Claude'}: {TITLES[approval.type]}</h1>
+      <h1 className="approval__lead">{scripted ? 'Requested by the rule-based stand-in' : 'Requested by Claude'}: {TITLES[approval.type]}</h1>
       {approval.reason && <p>Reason: {approval.reason}</p>}
       {approval.amountCents > 0 && (
         <div className="amount">
@@ -69,7 +69,7 @@ export function ApprovalCard({ approval, limitCents, items = [], renter, onAppro
       {!pending && approval.itemIds.length > 0 && <p className="muted">Items: {approval.itemIds.join(', ')}</p>}
       {pending && (
         <div className="who">
-          <div><span className="muted">Requested by</span><b>{scripted ? 'Scripted stand-in' : 'Claude'}</b><em>{approval.requestedVia?.label || 'agent tool call'}</em></div>
+          <div><span className="muted">Requested by</span><b>{scripted ? 'Rule-based stand-in' : 'Claude'}</b><em>{approval.requestedVia?.label || 'agent tool call'}</em></div>
           {approval.type === 'vault_charge' && <div><span className="muted">Agreed by renter</span><b>{renter || 'Renter'}</b><em>{accepted.length ? `accepted ${accepted.join(', ')} from the link` : 'did not accept; staff decided'}</em></div>}
           <div><span className="muted">Approver</span><b>{approver}</b><em>counter staff, you</em></div>
         </div>

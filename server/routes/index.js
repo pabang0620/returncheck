@@ -48,7 +48,7 @@ export function createApi(gateway) {
     const { set } = parse(z.object({ set: z.enum(['A', 'B', 'C']).default('A') }), req.body ?? {})
     pruneSessions(config)
     const session = createSession({ config, setId: set })
-    if (set === 'A') await runInspection(session, gateway)
+    if (set === 'A') await runInspection(session, gateway, { clientIp: req.ip })
     res.status(201).json({ success: true, data: { sid: session.id, staffKey: session.staffKey, renterKey: session.renterKey, state: stateOf(session, 'staff') } })
   }))
 
@@ -61,11 +61,11 @@ export function createApi(gateway) {
 
   // ---- staff ----
   const staff = withAuth('staff')
-  api.post('/s/:sid/inspect', staff, handler(async (req, res) => { await runInspection(req.session, gateway); ok(res, req.session, 'staff') }))
+  api.post('/s/:sid/inspect', staff, handler(async (req, res) => { await runInspection(req.session, gateway, { clientIp: req.ip }); ok(res, req.session, 'staff') }))
   api.post('/s/:sid/closeup', staff, handler(async (req, res) => {
     const { zone } = parse(z.object({ zone: z.string().min(1).max(30) }), req.body)
     requestCloseupUpload(req.session, zone)
-    await runInspection(req.session, gateway)
+    await runInspection(req.session, gateway, { clientIp: req.ip })
     ok(res, req.session, 'staff')
   }))
   api.post('/s/:sid/items/:itemId/confirm', staff, handler((req, res) => { staffConfirmItem(req.session, parse(idSchema, req.params.itemId)); ok(res, req.session, 'staff') }))
@@ -77,7 +77,7 @@ export function createApi(gateway) {
     staffDecideContest(req.session, parse(idSchema, req.params.itemId), body.decision, body)
     ok(res, req.session, 'staff')
   }))
-  api.post('/s/:sid/agent/settle', staff, handler(async (req, res) => { await runSettlement(req.session, gateway); ok(res, req.session, 'staff') }))
+  api.post('/s/:sid/agent/settle', staff, handler(async (req, res) => { await runSettlement(req.session, gateway, { clientIp: req.ip }); ok(res, req.session, 'staff') }))
   api.post('/s/:sid/approvals/:id/approve', staff, handler(async (req, res) => {
     const approver = parse(z.object({ approver: z.string().min(1).max(40).default('Mina') }), req.body ?? {}).approver
     const approval = await approve(req.session, parse(idSchema, req.params.id), approver, gateway)

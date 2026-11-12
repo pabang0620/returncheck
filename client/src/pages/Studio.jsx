@@ -19,6 +19,7 @@ export function Studio({ sid }) {
   const [mode, setMode] = useState('view')
   const [error, setError] = useState('')
   const [llm, setLlm] = useState(null)
+  const [answer, setAnswer] = useState(null)
   useEffect(() => {
     request('/health', { method: 'GET' }).then((h) => setLlm(h.modes)).catch(() => setLlm(null))
   }, [])
@@ -27,7 +28,7 @@ export function Studio({ sid }) {
   }, [sid])
   const data = useMemo(() => (fleet ? buildSources(fleet) : null), [fleet])
   const initialState = useMemo(() => initialReport(), [])
-  const ai = useMemo(() => createAnalystHarness(sid), [sid])
+  const ai = useMemo(() => createAnalystHarness(sid, setAnswer), [sid])
   if (error) return <p className="err">{error}</p>
   if (!data) return <p>Loading the fleet...</p>
   return (
@@ -38,6 +39,7 @@ export function Studio({ sid }) {
           <p className="muted">Seeded history for the last three months{sid ? ', plus the rental from your session' : ''}. Rows say which source they come from.</p>
           {!LICENCE_KEY && <p className="muted">No AG Studio licence key in this build, so AG Studio shows its trial watermark and logs its licence notice as a console warning.</p>}
           {mode === 'edit' && llm && <p className="muted">Damage Analyst: {llm.llm === 'live' ? `Live: ${llm.llmLabel}` : 'Recorded run: Claude Sonnet, 2026-11-12. The starter "Recovery by gear" replays that run, and AG Studio builds the widget from it. Other prompts get a fixed note, not a model answer.'}</p>}
+          {mode === 'edit' && answer?.reason && <p className="muted">Last answer: {answer.source === 'recorded' ? 'Recorded run' : 'Rule-based stand-in'} ({answer.reason}). The live model did not answer this request, so the screen used the recording or a fixed note.</p>}
         </div>
         <button onClick={() => setMode(mode === 'view' ? 'edit' : 'view')}>{mode === 'view' ? 'Edit dashboard' : 'Back to view'}</button>
       </div>

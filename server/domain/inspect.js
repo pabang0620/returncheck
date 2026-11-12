@@ -3,7 +3,7 @@ import { log } from '../demo/sessions.js'
 import { runAgent } from '../agent/index.js'
 
 function recordRun(session, phase, outcome) {
-  const run = { phase, reply: outcome.reply, events: outcome.events, texts: outcome.texts || [], source: outcome.source, recording: outcome.recording || null, diverged: Boolean(outcome.diverged), offline: Boolean(outcome.offline), at: new Date().toISOString() }
+  const run = { phase, reply: outcome.reply, events: outcome.events, texts: outcome.texts || [], source: outcome.source, recording: outcome.recording || null, diverged: Boolean(outcome.diverged), offline: Boolean(outcome.offline), fallbackReason: outcome.fallbackReason || null, at: new Date().toISOString() }
   session.agentRuns = { ...(session.agentRuns || {}), [phase]: run }
   return run
 }

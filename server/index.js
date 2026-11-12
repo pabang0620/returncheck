@@ -21,6 +21,7 @@ export async function createApp() {
   gateway.seedDemoToken(config.demoTokenId)
   const app = express()
   app.disable('x-powered-by')
+  app.set('trust proxy', /^\d+$/.test(config.trustProxy) ? Number(config.trustProxy) : config.trustProxy)
   // The Studio proxy carries whole agent conversations (60 kB and more) and sets its own larger limit.
   const json = express.json({ limit: '50kb' })
   app.use((req, res, next) => (/^\/api\/(studio\/|s\/[^/]+\/photos\/)/.test(req.path) ? next() : json(req, res, next)))

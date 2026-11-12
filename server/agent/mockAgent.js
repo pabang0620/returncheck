@@ -4,7 +4,7 @@ import { runTool, traceEvent } from './tools.js'
 
 // Scripted stand-in for the Claude loop, used only when no model is available and no recorded real run matches
 // the session state. It calls the same tools through the same executor, so permissions, allowed actions and
-// approval cards behave exactly as with the live model. The screen labels it "Scripted stand-in", never a model.
+// approval cards behave exactly as with the live model. The screen labels it "Rule-based stand-in", never a model.
 export async function runMockAgent(ctx, phase) {
   const events = []
   const call = async (name, input) => {

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { RATE_CODES } from '../domain/rateCard.js'
 import { CLOSEUP_FIXTURES, MODEL_VIEW, VISION_FIXTURES } from './fixtures.js'
+import { createRequiringTool } from '../llm/requiredTool.js'
 import { checkPhotoQuality, fitForModel, scaleBoxToOriginal } from './evidence.js'
 
 const boxSchema = z.object({ x: z.number().min(0), y: z.number().min(0), w: z.number().positive(), h: z.number().positive() })
@@ -36,7 +37,6 @@ export function buildVisionRequest({ model, zone, zoneLabel, before, after, clos
       description: 'Report the result for this zone',
       input_schema: { type: 'object', properties: { verdict: { enum: ['damage', 'none', 'uncertain'] }, confidence: { enum: ['high', 'medium', 'low'] }, rate_code: { enum: RATE_CODES }, box: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' }, w: { type: 'number' }, h: { type: 'number' } }, required: ['x', 'y', 'w', 'h'] }, note: { type: 'string' } }, required: ['verdict', 'confidence', 'note'] },
     }],
-    tool_choice: { type: 'tool', name: 'report_zone' },
     messages: [{ role: 'user', content }],
   }
 }
@@ -61,14 +61,19 @@ export async function compareZone({ setId, zone, zoneLabel, photos, useCloseup =
   const original = { width: after.width, height: after.height }
 
   if (anthropic && isRaster(before) && isRaster(after) && (!useCloseup || isRaster(closeup))) {
-    const sent = fitForModel(after.width, after.height)
-    const request = buildVisionRequest({ model, zone, zoneLabel, before, after: { ...after, sentWidth: sent.width, sentHeight: sent.height }, closeup: useCloseup ? closeup : null })
-    const response = await anthropic.messages.create(request)
-    const block = response.content.find((b) => b.type === 'tool_use' && b.name === 'report_zone')
-    if (!block) throw new Error('Claude returned no zone report')
-    const parsed = zoneReportSchema.parse(block.input)
-    const report = { zone, verdict: parsed.verdict, confidence: parsed.confidence, rateCode: parsed.rate_code, box: parsed.box, note: parsed.note, source: 'claude' }
-    return report.box ? { ...report, box: scaleBoxToOriginal(report.box, sent, original) } : report
+    try {
+      const sent = fitForModel(after.width, after.height)
+      const request = buildVisionRequest({ model, zone, zoneLabel, before, after: { ...after, sentWidth: sent.width, sentHeight: sent.height }, closeup: useCloseup ? closeup : null })
+      const response = await createRequiringTool(anthropic, request, 'report_zone')
+      if (!response) throw new Error('Claude did not call report_zone')
+      const block = response.content.find((b) => b.type === 'tool_use' && b.name === 'report_zone')
+      if (!block) throw new Error('Claude returned no zone report')
+      const parsed = zoneReportSchema.parse(block.input)
+      const report = { zone, verdict: parsed.verdict, confidence: parsed.confidence, rateCode: parsed.rate_code, box: parsed.box, note: parsed.note, source: 'claude' }
+      return report.box ? { ...report, box: scaleBoxToOriginal(report.box, sent, original) } : report
+    } catch {
+      // The model did not answer for this zone: use the seeded result below, labelled seeded (never as the model).
+    }
   }
 
   const recorded = useCloseup ? CLOSEUP_FIXTURES[setId]?.[zone] : VISION_FIXTURES[setId]?.[zone]

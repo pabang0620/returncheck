@@ -72,7 +72,8 @@ describe('vision comparison', () => {
     assert.ok(images.every((b) => b.oversized_image === 'error'))
     assert.deepEqual(fitForModel(3136, 2352), { width: 1568, height: 1176, scale: 0.5 })
     assert.deepEqual(r.box, { x: 200, y: 100, w: 400, h: 40 })
-    assert.equal(sentRequests[0].tool_choice.name, 'report_zone')
+    assert.equal(sentRequests[0].tool_choice, undefined)
+    assert.match(sentRequests[0].system, /You must answer by calling the tool report_zone\./)
   })
 
   it('buildVisionRequest never asks the model for a price', () => {

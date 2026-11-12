@@ -1,4 +1,6 @@
 import { readFileSync } from 'node:fs'
+import { FALLBACK_REASON } from '../llm/liveGuard.js'
+import { ANY_TOOL, createRequiringTool } from '../llm/requiredTool.js'
 // Translates AG Studio's LLM adapter requests (Responses-style conversation items) to the Anthropic
 // Messages API and back. AG Studio ships no Claude adapter, so this mapping is ours.
 const textBlock = (text) => ({ type: 'text', text })
@@ -7,6 +9,15 @@ function pushMessage(messages, role, blocks) {
   const last = messages[messages.length - 1]
   if (last && last.role === role) last.content = [...last.content, ...blocks]
   else messages.push({ role, content: blocks })
+}
+
+// The tool the model has to call for this turn, or null. Sent as a system instruction, never as tool_choice.
+export function requiredToolOf({ toolChoice = 'auto', responseFormat = { type: 'text' }, tools = [] }) {
+  if (responseFormat.type === 'json') return 'respond_json'
+  if (toolChoice === 'none') return null
+  if (toolChoice === 'required') return tools.length ? ANY_TOOL : null
+  if (typeof toolChoice === 'object' && toolChoice.name) return toolChoice.name
+  return null
 }
 
 export function toAnthropicRequest({ instructions, input = [], tools = [], toolChoice = 'auto', responseFormat = { type: 'text' } }) {
@@ -33,13 +44,10 @@ export function toAnthropicRequest({ instructions, input = [], tools = [], toolC
   const request = { system: system.join('\n\n'), messages, tools: anthropicTools }
   if (responseFormat.type === 'json') {
     request.tools = [...anthropicTools, { name: 'respond_json', description: responseFormat.description || 'Return the final JSON answer', input_schema: responseFormat.schema }]
-    request.tool_choice = { type: 'tool', name: 'respond_json' }
   } else if (toolChoice === 'none') {
     request.tools = []
   } else if (toolChoice === 'required') {
-    request.tool_choice = { type: 'any' }
   } else if (typeof toolChoice === 'object' && toolChoice.name) {
-    request.tool_choice = { type: 'tool', name: toolChoice.name }
   }
   if (!request.tools.length) delete request.tools
   return request
@@ -82,9 +90,22 @@ export function recordedTurn(body) {
   return hit ? hit.output : null
 }
 
-export async function runStudioTurn(body, { anthropic, model }) {
-  if (!anthropic) return { source: 'recorded', output: recordedTurn(body) || recordedOutput() }
-  const request = toAnthropicRequest(body)
-  const response = await anthropic.messages.create({ model, max_tokens: 4096, ...request })
-  return { source: 'claude', output: fromAnthropicContent(response.content, { json: body.responseFormat?.type === 'json' }) }
+const fallbackReply = (reason) => `The live model is not answering this request (${reason}), so this is a fixed note, not a model answer. One real Claude Sonnet run was recorded: use the first starter, "Recovery by gear", to see a bar chart built from a recorded Claude session. Try the damage map: click a zone to filter every widget.`
+
+// `reason` is set when a live model was meant to answer but could not (limit reached or a failed call): the answer
+// is then the recorded run or a fixed note, and the reason travels with it so the screen can say so.
+export async function runStudioTurn(body, { anthropic, model, reason = null }) {
+  if (anthropic && !reason) {
+    try {
+      const request = toAnthropicRequest(body)
+      const response = await createRequiringTool(anthropic, { model, max_tokens: 4096, ...request }, requiredToolOf({ ...body, tools: request.tools || [] }))
+      if (!response) throw new Error('Claude did not call the required tool')
+      return { source: 'claude', output: fromAnthropicContent(response.content, { json: body.responseFormat?.type === 'json' }) }
+    } catch {
+      return runStudioTurn(body, { anthropic: null, model, reason: FALLBACK_REASON.ERROR })
+    }
+  }
+  const hit = recordedTurn(body)
+  const output = hit || (reason ? [{ id: nextId('msg'), kind: 'output', type: 'message', role: 'assistant', status: 'completed', content: [{ type: 'text', text: fallbackReply(reason), annotations: [] }] }] : recordedOutput())
+  return { source: 'recorded', output, ...(reason ? { reason } : {}) }
 }

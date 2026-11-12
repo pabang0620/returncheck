@@ -15,7 +15,7 @@ Built for the PayPal AI Hackathon 2026. Prizes aimed at: Best Use of PayPal + AI
 - **Approval-pending money tools**: `request_vault_charge`, `request_refund`, `request_invoice`, `request_token_delete`. They have no amount argument. The server sums the rate card prices, checks the consent limit, the item states and duplicates, and only creates an approval card. Nothing reaches PayPal until staff press Approve.
 - **Decision table as code** (`server/domain/decisionTable.js`): code decides allowed actions, amounts, token branch and refund branch. The model decides whether a mark is new (photos plus past returns of the same asset), what to do with an ambiguous zone, and which accepted items to request now versus which contested ones go to staff. People approve every money action.
 - **Claude vision comparison** (`server/vision`): request builder for real JPEG/PNG photos (shrunk, `oversized_image: "error"`, boxes mapped back to original pixels). The preloaded photo sets are SVG drawings, so their zone comparisons are seeded results written by hand for those drawings (labelled `seeded`, not model output).
-- **Recorded real runs** (`server/demo/recorded-runs/*.json`): seven runs of the agent loop through Claude Sonnet (local Claude Code account, 2026-11-12): inspection of sets A, B, B after the close-up and C, and settlement for the charge, the refund and the invoice fallback. Each file holds the tool calls in order with inputs, the model's text and timings. Without a model the app replays the run whose recorded state matches the session exactly, through the same tool executor, and labels it "Recorded run: Claude Sonnet, 2026-11-12". A state no recording covers runs a scripted stand-in labelled "Scripted stand-in (no model)". `npm run record:runs` records missing files again (needs a Claude Code login on the machine; the script sets `LLM_BACKEND=account`, blanks the API key and PayPal keys, and refuses to run otherwise).
+- **Recorded real runs** (`server/demo/recorded-runs/*.json`): seven runs of the agent loop through Claude Sonnet (local Claude Code account, 2026-11-12): inspection of sets A, B, B after the close-up and C, and settlement for the charge, the refund and the invoice fallback. Each file holds the tool calls in order with inputs, the model's text and timings. Without a model the app replays the run whose recorded state matches the session exactly, through the same tool executor, and labels it "Recorded run: Claude Sonnet, 2026-11-12". A state no recording covers runs a rule-based stand-in labelled "Rule-based stand-in (no model)". `npm run record:runs` records missing files again (needs a Claude Code login on the machine; the script sets `LLM_BACKEND=account`, blanks the API key and PayPal keys, and refuses to run otherwise).
 - **AG Studio fleet dashboard** (`/studio`): custom widgets (damage map with cross filter, recovery tile, queue), standard grid and charts, a shared theme with the staff app, and a Studio agent ("Damage Analyst") that delegates to the built-in data and widget agents through a Claude adapter we wrote (`server/routes/studioLlm.js`). The adapter was run once against Claude Sonnet through a local Claude Code account (VERIFY V10) and built a bar chart; that session is recorded and replayed when no model is available.
 - **Invoice fallback** (plan 6-5): when the saved token is revoked, or with `PAYMENT_MODE=invoice`, Claude can only request an invoice for accepted items; staff approval then runs Toolkit `create_invoice` and `send_invoice`. Charge actions are not offered.
 
@@ -36,34 +36,39 @@ Development: `npm run dev:server` and `npm run dev:client` (Vite on 5180, proxy 
 ## Judge walkthrough (steps 1 to 4)
 
 1. **Try the demo rental**. The staff side opens with the draft items from Claude's recorded inspection run: a scratch (item 1), an old barrel mark that Claude found in the earlier return R-0977 and does not bill (item 2), and a possible dent (item 3).
-2. Keep and send. Staff side: **Keep** items 1 and 3, **Send link**. In the phone on the right: **Accept** item 1, then **Contest + photo** on item 3, **Use example note** ("This is dust, not a dent"), **Send contest**. Any other note works; the settlement then runs the scripted stand-in because no recording covers it.
+2. Keep and send. Staff side: **Keep** items 1 and 3, **Send link**. In the phone on the right: **Accept** item 1, then **Contest + photo** on item 3, **Use example note** ("This is dust, not a dent"), **Send contest**. Any other note works; the settlement then runs the rule-based stand-in because no recording covers it.
 3. **Ask Claude to settle**. Claude (recorded run) holds item 3 for staff and requests a charge for item 1. The approval card says "Not executed until approved".
 4. **Approve**. The card shows the PayPal order id, `COMPLETED`, the `invoice_id`, the `PayPal-Request-Id` and the items PayPal returned for the order. The server refuses to record an order whose amount, capture or `invoice_id` differs from what staff approved.
 
 The **Monday pickup** card at the top of the staff side (screen A) shows the six check-out photos with their capture times and the renter step ("Show the renter phone"); **Retake with a file** swaps in a real JPEG or PNG. After a charge, **Dispute watch** lists open PayPal disputes through the Agent Toolkit (`list_disputes`, `get_dispute`) and keeps those on this rental's captures; it is read only, and on the mock gateway a button simulates a dispute so the screen has something to show.
 
-The staff screen has a Claude trace panel with every tool call, its input, result and time offset, and the model's text, labelled "Live", "Recorded run: Claude Sonnet, 2026-11-12" or "Scripted stand-in (no model)". **Ask Claude to settle** is disabled when there is nothing to request, with the reason under it. Optional: Waive item 3 and close the rental (then open the readable evidence page); Reduce item 1 after the charge, ask Claude again and approve the refund; photo sets B (close-up request) and C (nothing to bill) from the start page; **Save PayPal yourself** to save your own sandbox token, which a later approval card can delete (the shared demo token is never deleted); **Simulate: I removed ReturnCheck in PayPal** to see the invoice fallback; the fleet dashboard from the header link.
+The staff screen has a Claude trace panel with every tool call, its input, result and time offset, and the model's text, labelled "Live", "Recorded run: Claude Sonnet, 2026-11-12" or "Rule-based stand-in (no model)". **Ask Claude to settle** is disabled when there is nothing to request, with the reason under it. Optional: Waive item 3 and close the rental (then open the readable evidence page); Reduce item 1 after the charge, ask Claude again and approve the refund; photo sets B (close-up request) and C (nothing to bill) from the start page; **Save PayPal yourself** to save your own sandbox token, which a later approval card can delete (the shared demo token is never deleted); **Simulate: I removed ReturnCheck in PayPal** to see the invoice fallback; the fleet dashboard from the header link.
 
 ## Environment variables
 
 | Name | Default | Meaning |
 |---|---|---|
 | `PORT`, `PUBLIC_URL` | 3010, localhost | Server port and the URL PayPal returns to |
-| `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | empty, `claude-sonnet-5-5` | Empty = recorded real agent runs (or the labelled scripted stand-in) and seeded comparisons for the drawn photos |
+| `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | empty, `claude-sonnet-5-5` | Empty = recorded real agent runs (or the labelled rule-based stand-in) and seeded comparisons for the drawn photos |
 | `LLM_BACKEND` | empty | `account` = local development through the Claude Agent SDK and your Claude Code login (no API key; the key variables are removed from the child process). The staff screen then says "Claude Sonnet (local account)". Ignored when `FORCE_MOCK=1` |
 | `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET` | empty | Sandbox app. Empty = mock PayPal |
 | `DEMO_VAULT_TOKEN_ID` | `DEMO-SHARED-TOKEN` | Pre-saved token every judge session may charge but never delete |
 | `SANDBOX_BUYER_EMAIL` | empty | Fake sandbox buyer shown to judges |
 | `PAYMENT_MODE` | `vault` | `invoice` = plan 6-5 fallback |
 | `MAX_SESSIONS`, `SESSION_TTL_MS` | 300, 6 h | Demo session limits |
+| `LLM_LIVE_PER_IP_HOUR` | 10 | Live model runs one client IP may start per hour. A run is one user action (inspection, settlement, one Studio prompt), not one tool turn |
+| `LLM_LIVE_PER_DAY` | 150 | Live model runs this server starts per day, all visitors together |
+| `TRUST_PROXY` | `loopback` | Express `trust proxy` value so the per-IP cap sees the visitor behind nginx |
 | `FORCE_MOCK` | unset | `1` ignores all keys |
 | `VITE_AG_STUDIO_LICENSE_KEY` | empty | Build-time AG Studio trial key |
+
+When a cap is full, or the model call fails (network, 4xx/5xx, timeout, no credit), the action still completes on the recorded real run for that scene, or on the rule-based stand-in when none matches. The screen says which one and why, for example "Recorded run: Claude Sonnet, 2026-11-12 (live limit reached)". No raw error is shown. The caps live in `server/llm/liveGuard.js`.
 
 ## Layout
 
 ```
 server/domain      claims state machine, rate card, allowed actions, approvals, decision table, locks
-server/agent       model tools (13), Claude loop, account loop, recorded-run replay, scripted stand-in, prompts
+server/agent       model tools (13), Claude loop, account loop, recorded-run replay, rule-based stand-in, prompts
 server/vision      comparison (live request builder, seeded results for drawn photos), evidence (resize, box mapping, hashes)
 server/integrations/gateway.js   Vault tools + Agent Toolkit calls, mock or sandbox
 server/demo        sessions (private clone per judge), seeded photos and fleet, recorded-runs/ (real Claude runs)

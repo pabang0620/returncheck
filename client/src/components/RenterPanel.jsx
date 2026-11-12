@@ -34,7 +34,7 @@ export function RenterPanel({ state, busy, act, onSaveOwn }) {
   )
 }
 
-// The note the recorded Claude settlement run answered. Any other note works too; it then runs the scripted stand-in.
+// The note the recorded Claude settlement run answered. Any other note works too; it then runs the rule-based stand-in.
 const EXAMPLE_NOTE = 'This is dust, not a dent'
 
 function RenterItem({ item, busy, act }) {
