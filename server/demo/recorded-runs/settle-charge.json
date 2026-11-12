@@ -1,0 +1,80 @@
+{
+  "id": "settle-charge",
+  "key": "settle|set=A|mode=vault|token=demo_shared:active|charges=0|pending=|ITEM-1:accepted:3500:::|ITEM-2:dropped:0:::|ITEM-3:contested:0:this is dust, not a dent::",
+  "phase": "settle",
+  "setId": "A",
+  "model": "claude-sonnet-5-5",
+  "modelName": "Claude Sonnet",
+  "backend": "account (local Claude Code login, Claude Agent SDK)",
+  "recordedAt": "2026-11-12T05:28:51.022Z",
+  "durationMs": 10004,
+  "reply": "Claim CLM-1042-8C1F7EAA has one charge waiting for approval and one item on hold.\n\n- **Waiting for approval:** APR-c6f2b42d is a PayPal charge for ITEM-1, the top plate small scratch, at the rate card price of 3500 cents. It is pending and nothing has gone to PayPal yet.\n- **On hold:** ITEM-3, the lens mount dent, is held for staff. The renter says it is dust, not a dent. Our comparison is only medium confidence, no earlier return shows the mark, and the renter sent no photo.\n- **Dropped:** ITEM-2, the lens barrel mark, was already dropped as pre-existing (it appears in R-0977), so it is not billed.\n- **No other actions:** The allowed actions list had no refund or invoice option, and the payment token is active.\n\nYour next step is to approve or reject APR-c6f2b42d, then review the ITEM-3 photos and decide whether to keep or drop the dent.",
+  "texts": [
+    {
+      "atMs": 9338,
+      "text": "Claim CLM-1042-8C1F7EAA has one charge waiting for approval and one item on hold.\n\n- **Waiting for approval:** APR-c6f2b42d is a PayPal charge for ITEM-1, the top plate small scratch, at the rate card price of 3500 cents. It is pending and nothing has gone to PayPal yet.\n- **On hold:** ITEM-3, the lens mount dent, is held for staff. The renter says it is dust, not a dent. Our comparison is only medium confidence, no earlier return shows the mark, and the renter sent no photo.\n- **Dropped:** ITEM-2, the lens barrel mark, was already dropped as pre-existing (it appears in R-0977), so it is not billed.\n- **No other actions:** The allowed actions list had no refund or invoice option, and the payment token is active.\n\nYour next step is to approve or reject APR-c6f2b42d, then review the ITEM-3 photos and decide whether to keep or drop the dent."
+    }
+  ],
+  "steps": [
+    {
+      "tool": "get_rental",
+      "input": {
+        "rental_id": "R-1042"
+      },
+      "ok": true,
+      "resultSummary": "3 items, allowed: hold_for_staff, summarize_contest, request_vault_charge",
+      "atMs": 2454
+    },
+    {
+      "tool": "vault_get_payment_token",
+      "input": {
+        "rental_id": "R-1042"
+      },
+      "ok": true,
+      "resultSummary": "{\"status\":\"active\",\"shared_demo_token\":true}",
+      "atMs": 2478
+    },
+    {
+      "tool": "summarize_contest",
+      "input": {
+        "item_id": "ITEM-3"
+      },
+      "ok": true,
+      "resultSummary": "{\"item_id\":\"ITEM-3\",\"zone\":\"lens_mount\",\"rate_code\":\"DNT-M\",\"confidence\":\"medium\",\"claude...",
+      "atMs": 3502
+    },
+    {
+      "tool": "hold_for_staff",
+      "input": {
+        "claim_id": "CLM-1042-8C1F7EAA",
+        "reason": "ITEM-3 (lens mount, dent): renter says it is dust, not a dent. Our comparison is medium confidence, no earlier return shows it, and no renter photo was given. A person should check the photos or ask for a close-up."
+      },
+      "ok": true,
+      "resultSummary": "{\"held\":true}",
+      "atMs": 5717
+    },
+    {
+      "tool": "request_vault_charge",
+      "input": {
+        "claim_id": "CLM-1042-8C1F7EAA",
+        "item_ids": [
+          "ITEM-1"
+        ],
+        "reason": "Accepted, uncontested small scratch on the top plate, new at this return."
+      },
+      "ok": true,
+      "resultSummary": "approval APR-c6f2b42d pending, nothing sent to PayPal",
+      "atMs": 6358
+    }
+  ],
+  "approvalsAfter": [
+    {
+      "type": "vault_charge",
+      "status": "pending",
+      "amountCents": 3500,
+      "itemIds": [
+        "ITEM-1"
+      ]
+    }
+  ]
+}

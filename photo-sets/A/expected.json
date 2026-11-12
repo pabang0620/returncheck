@@ -1,0 +1,8 @@
+{
+  "body_front": { "damage": false },
+  "top_plate": { "damage": true, "kind": "scratch", "box": { "x": 365, "y": 385, "w": 265, "h": 50 } },
+  "rear_lcd": { "damage": false },
+  "lens_front": { "damage": false },
+  "lens_barrel": { "damage": false, "preExisting": true },
+  "lens_mount": { "damage": true, "kind": "dent", "box": { "x": 612, "y": 225, "w": 66, "h": 34 } }
+}

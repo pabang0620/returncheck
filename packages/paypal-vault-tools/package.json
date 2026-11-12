@@ -1,0 +1,10 @@
+{
+  "name": "paypal-vault-tools",
+  "version": "0.1.0",
+  "description": "PayPal Vault v3 tools in the same shape as @paypal/agent-toolkit tools (method, name, description, zod parameters, actions) plus an execute function",
+  "type": "module",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "peerDependencies": { "zod": "^4.0.0" }
+}

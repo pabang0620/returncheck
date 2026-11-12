@@ -1,0 +1,88 @@
+{
+  "ranAt": "2026-11-12T12:25:10.684Z",
+  "backend": "account-mode Sonnet (local Claude Code login)",
+  "photos": "AI-generated photorealistic test images (Flow), not real photos, set A",
+  "summary": {
+    "zones": 6,
+    "match": 6,
+    "miss": 0,
+    "falseAlarm": 0,
+    "uncertain": 0,
+    "unreadable": 0,
+    "boxHits": 2
+  },
+  "rows": [
+    {
+      "zone": "body_front",
+      "expected": "none",
+      "preExisting": false,
+      "verdict": "none",
+      "outcome": "match",
+      "confidence": "medium",
+      "rateCode": null,
+      "boxHit": null,
+      "note": "The body front looks the same in both photos. The lens mount ring, grip texture, top dials and body edges show no new scratches, dents or scuffs. Both images have the same framing and lighting, and the dark finish makes very fine marks hard to see.",
+      "source": "claude"
+    },
+    {
+      "zone": "top_plate",
+      "expected": "damage",
+      "preExisting": false,
+      "verdict": "damage",
+      "outcome": "match",
+      "confidence": "high",
+      "rateCode": "SCR-L",
+      "boxHit": true,
+      "note": "A new light-colored scratch runs across the top plate, above the hot shoe, between the left and the mode dial. It exposes the underlying material through the black finish. It isn't in the check-out photo.",
+      "source": "claude"
+    },
+    {
+      "zone": "rear_lcd",
+      "expected": "none",
+      "preExisting": false,
+      "verdict": "none",
+      "outcome": "match",
+      "confidence": "medium",
+      "rateCode": null,
+      "boxHit": null,
+      "note": "The rear LCD looks the same in both photos. The screen is dark and off, with no visible new scratches, cracks or marks. The images are dark and low in detail, so only obvious damage could be ruled out.",
+      "source": "claude"
+    },
+    {
+      "zone": "lens_front",
+      "expected": "none",
+      "preExisting": false,
+      "verdict": "none",
+      "outcome": "match",
+      "confidence": "medium",
+      "rateCode": null,
+      "boxHit": null,
+      "note": "The two photos of the lens front element look the same. The glass, filter ring and barrel show no new scratches, cracks, dents or chips. The only difference I can see is a slightly softer, lower-contrast look in the second image, which is most likely compression or lighting and not damage.",
+      "source": "claude"
+    },
+    {
+      "zone": "lens_barrel",
+      "expected": "none",
+      "preExisting": true,
+      "verdict": "none",
+      "outcome": "match",
+      "confidence": "high",
+      "rateCode": null,
+      "boxHit": null,
+      "note": "The chip or paint loss on the edge of the grip ring (around x=540, y=415) shows in both the check-out and check-in photos. It looks the same in each, so it is already there and not new. I found no other differences between the two photos on the barrel.",
+      "source": "claude"
+    },
+    {
+      "zone": "lens_mount",
+      "expected": "damage",
+      "preExisting": false,
+      "verdict": "damage",
+      "outcome": "match",
+      "confidence": "high",
+      "rateCode": "DNT-M",
+      "boxHit": true,
+      "note": "In the check-in photo the top of the metal mount ring, just left of 12 o'clock, has a new chip or gouge. The ring edge is broken and bent, with exposed bright metal. The same spot in the check-out photo is smooth and intact.",
+      "source": "claude"
+    }
+  ]
+}

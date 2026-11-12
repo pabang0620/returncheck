@@ -1,0 +1,7 @@
+node_modules
+dist
+.env
+.scratch
+eval/pairs/
+photo-sets/A/_gen/
+photo-sets/A/_candidates/

@@ -1,0 +1,80 @@
+{
+  "id": "settle-invoice",
+  "key": "settle|set=A|mode=vault|token=demo_shared:revoked|charges=0|pending=|ITEM-1:accepted:3500:::|ITEM-2:dropped:0:::|ITEM-3:contested:0:this is dust, not a dent::",
+  "phase": "settle",
+  "setId": "A",
+  "model": "claude-sonnet-5-5",
+  "modelName": "Claude Sonnet",
+  "backend": "account (local Claude Code login, Claude Agent SDK)",
+  "recordedAt": "2026-11-12T05:29:11.484Z",
+  "durationMs": 12333,
+  "reply": "Claim CLM-1042-E770B65F for R-1042 is settled as far as I can take it. One invoice is waiting for approval and one item is on hold.\n\n- **Waiting for approval:** Invoice APR-ad164a13 covers ITEM-1, the top plate small scratch, at the rate card amount of 3,500 cents. I requested an invoice because the saved PayPal token is revoked. Nothing has gone to PayPal yet.\n- **On hold:** ITEM-3, the possible dent on the lens mount, is held for staff. The renter says it is dust, not a dent. The comparison confidence is medium, and no earlier return of this asset shows the mark.\n- **Dropped:** ITEM-2, the barrel mark, was already dropped. It was pre-existing, as shown in R-0977.\n\nNext step: approve or reject APR-ad164a13, then look at the before and after lens mount photos to decide ITEM-3.",
+  "texts": [
+    {
+      "atMs": 11773,
+      "text": "Claim CLM-1042-E770B65F for R-1042 is settled as far as I can take it. One invoice is waiting for approval and one item is on hold.\n\n- **Waiting for approval:** Invoice APR-ad164a13 covers ITEM-1, the top plate small scratch, at the rate card amount of 3,500 cents. I requested an invoice because the saved PayPal token is revoked. Nothing has gone to PayPal yet.\n- **On hold:** ITEM-3, the possible dent on the lens mount, is held for staff. The renter says it is dust, not a dent. The comparison confidence is medium, and no earlier return of this asset shows the mark.\n- **Dropped:** ITEM-2, the barrel mark, was already dropped. It was pre-existing, as shown in R-0977.\n\nNext step: approve or reject APR-ad164a13, then look at the before and after lens mount photos to decide ITEM-3."
+    }
+  ],
+  "steps": [
+    {
+      "tool": "get_rental",
+      "input": {
+        "rental_id": "R-1042"
+      },
+      "ok": true,
+      "resultSummary": "3 items, allowed: hold_for_staff, summarize_contest, request_invoice",
+      "atMs": 4089
+    },
+    {
+      "tool": "vault_get_payment_token",
+      "input": {
+        "rental_id": "R-1042"
+      },
+      "ok": true,
+      "resultSummary": "{\"status\":\"revoked\",\"shared_demo_token\":true}",
+      "atMs": 4126
+    },
+    {
+      "tool": "summarize_contest",
+      "input": {
+        "item_id": "ITEM-3"
+      },
+      "ok": true,
+      "resultSummary": "{\"item_id\":\"ITEM-3\",\"zone\":\"lens_mount\",\"rate_code\":\"DNT-M\",\"confidence\":\"medium\",\"claude...",
+      "atMs": 5361
+    },
+    {
+      "tool": "request_invoice",
+      "input": {
+        "claim_id": "CLM-1042-E770B65F",
+        "item_ids": [
+          "ITEM-1"
+        ],
+        "reason": "Saved PayPal token is revoked. ITEM-1 (top plate small scratch) is accepted and not contested."
+      },
+      "ok": true,
+      "resultSummary": "approval APR-ad164a13 pending, nothing sent to PayPal",
+      "atMs": 8170
+    },
+    {
+      "tool": "hold_for_staff",
+      "input": {
+        "claim_id": "CLM-1042-E770B65F",
+        "reason": "ITEM-3 (lens mount, possible dent) is contested. Renter says it is dust, not a dent. Comparison confidence is medium, so a person should look at the before and after photos and decide."
+      },
+      "ok": true,
+      "resultSummary": "{\"held\":true}",
+      "atMs": 8884
+    }
+  ],
+  "approvalsAfter": [
+    {
+      "type": "invoice",
+      "status": "pending",
+      "amountCents": 3500,
+      "itemIds": [
+        "ITEM-1"
+      ]
+    }
+  ]
+}
